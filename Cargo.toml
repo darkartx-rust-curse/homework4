@@ -1,0 +1,10 @@
+[package]
+name = "homework4"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "smart_house"
+path = "src/lib.rs"
+
+[dependencies]
