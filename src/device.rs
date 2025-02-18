@@ -1,4 +1,4 @@
-use super::house::{Room, Device};
+use super::house::{Device, Room};
 
 pub struct SmartSocket {}
 
@@ -52,9 +52,7 @@ pub struct OwningDeviceInfoProvider {
 
 impl OwningDeviceInfoProvider {
     pub fn new(socket: SmartSocket) -> Self {
-        Self {
-            socket
-        }
+        Self { socket }
     }
 }
 
@@ -80,10 +78,7 @@ pub struct BorrowingDeviceInfoProvider<'a, 'b> {
 
 impl<'a, 'b> BorrowingDeviceInfoProvider<'a, 'b> {
     pub fn new(socket: &'a SmartSocket, thermo: &'b SmartThermometer) -> Self {
-        Self {
-            socket,
-            thermo
-        }
+        Self { socket, thermo }
     }
 }
 
@@ -106,5 +101,105 @@ impl DeviceInfoProvider for BorrowingDeviceInfoProvider<'_, '_> {
         }
 
         Some(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_smart_socket_get_status_returns_status() {
+        let smart_socket = SmartSocket {};
+        let device = Device::AC;
+        let room = Room::new("Спальня".into(), vec![]);
+
+        assert_eq!(smart_socket.get_status(&room, &device), Some("on".into()))
+    }
+
+    #[test]
+    fn it_smart_socket_get_status_returns_none() {
+        let smart_socket = SmartSocket {};
+        let device = Device::AC;
+        let room = Room::new("test".into(), vec![]);
+
+        assert_eq!(smart_socket.get_status(&room, &device), None)
+    }
+
+    #[test]
+    fn it_smart_thermometer_get_status_returns_status() {
+        let smart_thermometer = SmartThermometer {};
+        let device = Device::AC;
+        let room = Room::new("Спальня".into(), vec![]);
+
+        assert_eq!(
+            smart_thermometer.get_status(&room, &device),
+            Some("25".into())
+        )
+    }
+
+    #[test]
+    fn it_smart_thermometer_get_status_returns_none() {
+        let smart_thermometer = SmartThermometer {};
+        let device = Device::AC;
+        let room = Room::new("test".into(), vec![]);
+
+        assert_eq!(smart_thermometer.get_status(&room, &device), None)
+    }
+
+    #[test]
+    fn it_owning_device_info_provider_get_status_returns_status() {
+        let smart_socket = SmartSocket {};
+        let owning_device_info_provider = OwningDeviceInfoProvider::new(smart_socket);
+        let device = Device::AC;
+        let room = Room::new("Спальня".into(), vec![]);
+
+        assert_eq!(
+            owning_device_info_provider.get_status(&room, &device),
+            Some("socket: on".into())
+        )
+    }
+
+    #[test]
+    fn it_owning_device_info_provider_get_status_returns_none() {
+        let smart_socket = SmartSocket {};
+        let owning_device_info_provider = OwningDeviceInfoProvider::new(smart_socket);
+        let device = Device::AC;
+        let room = Room::new("test".into(), vec![]);
+
+        assert_eq!(
+            owning_device_info_provider.get_status(&room, &device),
+            Some("socket: none".into())
+        )
+    }
+
+    #[test]
+    fn it_borrowing_device_info_provider_get_status_returns_status() {
+        let smart_socket = SmartSocket {};
+        let smart_thermometer = SmartThermometer {};
+        let borrowing_device_info_provider =
+            BorrowingDeviceInfoProvider::new(&smart_socket, &smart_thermometer);
+        let device = Device::AC;
+        let room = Room::new("Спальня".into(), vec![]);
+
+        assert_eq!(
+            borrowing_device_info_provider.get_status(&room, &device),
+            Some("socket: on, thermo: 25".into())
+        )
+    }
+
+    #[test]
+    fn it_borrowing_device_info_provider_get_status_returns_none() {
+        let smart_socket = SmartSocket {};
+        let smart_thermometer = SmartThermometer {};
+        let borrowing_device_info_provider =
+            BorrowingDeviceInfoProvider::new(&smart_socket, &smart_thermometer);
+        let device = Device::AC;
+        let room = Room::new("test".into(), vec![]);
+
+        assert_eq!(
+            borrowing_device_info_provider.get_status(&room, &device),
+            Some("socket: none, thermo: none".into())
+        )
     }
 }

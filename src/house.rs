@@ -1,7 +1,4 @@
-use super::{
-    error::Error,
-    device::DeviceInfoProvider
-};
+use super::{device::DeviceInfoProvider, error::Error};
 
 #[derive(Debug)]
 pub struct House {
@@ -21,7 +18,7 @@ impl House {
     pub fn devices(&self, room_name: &str) -> Result<Vec<&str>, Error> {
         for room in &self.rooms {
             if room.name == room_name {
-                return Ok(room.get_devices())
+                return Ok(room.get_devices());
             }
         }
 
@@ -67,7 +64,7 @@ impl Default for House {
                 Room::new("Пильня".into(), vec![Stove, Fridge, Dishwasher]),
                 Room::new("Спальня".into(), vec![AC, Lamp, Ebook]),
                 Room::new("Телевизор смотрельня".into(), vec![TV, Game, Router]),
-            ]
+            ],
         )
     }
 }
@@ -123,4 +120,82 @@ impl Device {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::device::SmartSocket;
 
+    use super::*;
+
+    #[test]
+    fn it_house_get_rooms_returns_rooms() {
+        let house = House::default();
+
+        assert_eq!(
+            house.get_rooms(),
+            vec![
+                "Спальня",
+                "Ельня",
+                "Пильня",
+                "Спальня",
+                "Телевизор смотрельня"
+            ]
+        )
+    }
+
+    #[test]
+    fn it_house_devices_returns_devices() {
+        let house = House::default();
+
+        assert_eq!(
+            house.devices("Спальня").unwrap(),
+            vec!["Кондиционер", "Лампа", "Электронная книга"]
+        )
+    }
+
+    #[test]
+    fn it_house_devices_returns_error() {
+        let house = House::default();
+
+        assert_eq!(
+            house.devices("test").err().unwrap(),
+            Error::RoomNotFound("test".into())
+        )
+    }
+
+    #[test]
+    fn it_house_create_report_returns_report() {
+        let house = House::default();
+        let smart_socket = SmartSocket {};
+
+        assert_eq!(
+            &house.create_report(&smart_socket),
+            "House: Дом
+
+  Room: Спальня
+    Device: Кондиционер (on)
+    Device: Лампа (on)
+    Device: Электронная книга ()
+
+  Room: Ельня
+    Device: Плита (off)
+    Device: Холодильник (off)
+    Device: Посудомоечная машина (on)
+
+  Room: Пильня
+    Device: Плита (off)
+    Device: Холодильник (off)
+    Device: Посудомоечная машина (off)
+
+  Room: Спальня
+    Device: Кондиционер (on)
+    Device: Лампа (on)
+    Device: Электронная книга ()
+
+  Room: Телевизор смотрельня
+    Device: Телевизор (off)
+    Device: Игровая приставка (off)
+    Device: Маршрутизатор (off)
+"
+        )
+    }
+}
